@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>りのすけ てんずけい 10x10 線対称（ひたいしょう図形）全10枚セット</title>
+<style>
+  @page {
+    size: A4 portrait;
+    margin: 6mm;
+  }
+  
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: "Hiragino Sans", "Meiryo", sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #fff;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  
+  .page {
+    width: 100%;
+    height: 284mm;
+    page-break-after: always;
+    break-after: page;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+  }
+  .page:last-child {
+    page-break-after: auto;
+    break-after: auto;
+  }
+
+  header {
+    border-bottom: 2px solid #000;
+    padding-bottom: 4px;
+    margin-bottom: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+  .title { font-size: 15pt; font-weight: bold; }
+  .name-box { 
+    font-size: 11pt; 
+    border: 1.5px solid #000; 
+    border-radius: 4px;
+    width: 90mm;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    padding-left: 10px;
+  }
+  .subtitle { text-align: center; font-size: 8.5pt; margin-bottom: 4px; font-weight: bold; }
+  
+  .grid-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: repeat(3, 1fr);
+    gap: 6px;
+    flex: 1;
+  }
+  
+  .problem-box {
+    border: 1.5px solid #333;
+    border-radius: 6px;
+    padding: 4px;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .problem-title { font-weight: bold; font-size: 9pt; border-bottom: 1px dashed #ccc; padding-bottom: 2px; margin-bottom: 2px; }
+  .content { display: flex; justify-content: space-around; align-items: center; flex: 1; padding: 0; }
+  .section { text-align: center; position: relative; }
+  .section-label { font-size: 8pt; color: #444; margin-bottom: 2px; font-weight: bold; }
+  
+  .axis-line {
+    width: 2px;
+    height: 125px;
+    margin: 0 2px;
+    border-left: 2px dashed #e63946;
+  }
+
+  svg { display: block; margin: 0 auto; }
+</style>
+</head>
+<body>
+
+<script>
+// 10x10 の点（140x140キャンバス内に10x10配置）
+// 座標: 5, 19, 33, 47, 61, 75, 89, 103, 117, 131
+const getCoord10 = (i) => 5 + i * 14;
+
+const dots10x10HTML = () => {
+  let dots = '';
+  for (let r = 0; r < 10; r++) {
+    for (let c = 0; c < 10; c++) {
+      dots += `<circle cx="${getCoord10(c)}" cy="${getCoord10(r)}" r="2" fill="#000"/>`;
+    }
+  }
+  return dots;
+};
+
+// 10x10格子のグリッド座標 (0~9) から SVG座標への変換
+const drawLines10 = (lines) => {
+  return lines.map(l => {
+    const x1 = getCoord10(l[0]), y1 = getCoord10(l[1]);
+    const x2 = getCoord10(l[2]), y2 = getCoord10(l[3]);
+    return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#000" stroke-width="2.5" stroke-linecap="round"/>`;
+  }).join('');
+};
+
+// 10枚×6問（計60問）の非対称問題セット (片側 0~9x, 0~9y 上の線)
+const pagesData = [
+  {
+    vol: 1, title: "10×10 たてにおる（きほん①）",
+    problems: [
+      [[0,0, 4,0],[4,0, 4,9],[4,9, 0,9],[0,9, 0,0],[0,4, 3,4]],
+      [[1,1, 4,1],[4,1, 1,5],[1,5, 4,9],[4,9, 1,9]],
+      [[0,2, 4,0],[4,0, 4,8],[4,8, 0,6],[0,6, 0,2]],
+      [[1,0, 3,0],[3,0, 3,4],[3,4, 1,4],[1,4, 1,9],[1,9, 4,9]],
+      [[0,0, 4,4],[4,4, 0,8],[0,8, 3,8]],
+      [[0,1, 4,1],[2,1, 2,8],[0,8, 4,8]]
+    ]
+  },
+  {
+    vol: 2, title: "10×10 たてにおる（きほん②）",
+    problems: [
+      [[0,0, 4,2],[4,2, 1,5],[1,5, 4,8],[4,8, 0,9]],
+      [[0,1, 3,1],[3,1, 3,5],[3,5, 0,5],[0,5, 0,9],[0,9, 4,9]],
+      [[1,0, 4,3],[4,3, 1,6],[1,6, 4,9]],
+      [[0,0, 4,0],[4,0, 2,4],[2,4, 4,8],[4,8, 0,8]],
+      [[0,2, 4,2],[4,2, 4,6],[4,6, 1,6],[1,6, 1,9],[1,9, 3,9]],
+      [[0,0, 3,3],[3,3, 0,6],[0,6, 4,6],[4,6, 4,9]]
+    ]
+  },
+  {
+    vol: 3, title: "10×10 たてにおる（かどかど①）",
+    problems: [
+      [[0,0, 4,0],[4,0, 2,2],[2,2, 4,4],[4,4, 0,4],[0,4, 0,8]],
+      [[1,1, 4,1],[4,1, 4,5],[4,5, 2,5],[2,5, 2,8],[2,8, 0,8]],
+      [[0,1, 3,1],[3,1, 1,4],[1,4, 4,4],[4,4, 2,7],[2,7, 0,9]],
+      [[0,0, 4,2],[4,2, 0,4],[0,4, 4,6],[4,6, 0,8]],
+      [[1,0, 1,8],[1,8, 4,8],[4,8, 4,4],[4,4, 2,4]],
+      [[0,2, 4,0],[4,0, 2,5],[2,5, 4,9],[4,9, 0,7]]
+    ]
+  },
+  {
+    vol: 4, title: "10×10 たてにおる（かどかど②）",
+    problems: [
+      [[0,1, 4,1],[4,1, 2,3],[2,3, 4,5],[4,5, 0,5],[0,5, 3,9]],
+      [[1,0, 3,2],[3,2, 1,4],[1,4, 4,4],[4,4, 2,8]],
+      [[0,0, 4,0],[4,0, 0,4],[0,4, 4,8],[4,8, 1,8]],
+      [[0,2, 3,0],[3,0, 3,6],[3,6, 0,8],[0,8, 4,8]],
+      [[1,1, 4,1],[4,1, 1,4],[1,4, 4,7],[4,7, 1,9]],
+      [[0,0, 2,4],[2,4, 0,8],[0,8, 4,8],[4,8, 4,2]]
+    ]
+  },
+  {
+    vol: 5, title: "10×10 たてにおる（むずかしい①）",
+    problems: [
+      [[0,0, 4,1],[4,1, 1,3],[1,3, 4,5],[4,5, 0,7],[0,7, 3,9]],
+      [[1,0, 4,0],[4,0, 2,3],[2,3, 4,6],[4,6, 1,6],[1,6, 3,9]],
+      [[0,2, 3,2],[3,2, 1,5],[1,5, 4,5],[4,5, 2,8],[2,8, 0,8]],
+      [[0,0, 3,0],[3,0, 0,3],[0,3, 4,3],[4,3, 1,7],[1,7, 4,9]],
+      [[1,1, 3,1],[3,1, 3,4],[3,4, 1,4],[1,4, 4,8],[4,8, 0,9]],
+      [[0,1, 4,0],[4,0, 2,4],[2,4, 4,7],[4,7, 0,8],[0,8, 3,8]]
+    ]
+  },
+  {
+    vol: 6, title: "10×10 たてにおる（むずかしい②）",
+    problems: [
+      [[0,0, 3,2],[3,2, 0,4],[0,4, 4,4],[4,4, 1,7],[1,7, 4,9]],
+      [[1,0, 4,2],[4,2, 2,4],[2,4, 4,6],[4,6, 0,9]],
+      [[0,1, 4,1],[4,1, 1,4],[1,4, 3,6],[3,6, 0,8]],
+      [[0,0, 4,0],[4,0, 2,5],[2,5, 4,8],[4,8, 1,8],[1,8, 3,9]],
+      [[1,2, 4,0],[4,0, 2,3],[2,3, 4,7],[4,7, 0,9]],
+      [[0,1, 3,1],[3,1, 0,4],[0,4, 4,7],[4,7, 1,9]]
+    ]
+  },
+  {
+    vol: 7, title: "10×10 たてにおる（応用①）",
+    problems: [
+      [[0,0, 4,2],[4,2, 1,4],[1,4, 4,6],[4,6, 2,9],[2,9, 0,7]],
+      [[1,1, 3,0],[3,0, 4,4],[4,4, 1,6],[1,6, 3,9]],
+      [[0,2, 4,1],[4,1, 2,4],[2,4, 4,8],[4,8, 0,8],[0,8, 3,9]],
+      [[0,0, 3,1],[3,1, 1,4],[1,4, 4,5],[4,5, 0,9]],
+      [[1,0, 4,3],[4,3, 0,5],[0,5, 3,7],[3,7, 1,9]],
+      [[0,1, 4,1],[4,1, 2,3],[2,3, 4,6],[4,6, 0,6],[0,6, 3,9]]
+    ]
+  },
+  {
+    vol: 8, title: "10×10 たてにおる（応用②）",
+    problems: [
+      [[0,0, 3,2],[3,2, 1,5],[1,5, 4,7],[4,7, 0,9]],
+      [[1,0, 4,1],[4,1, 2,4],[2,4, 4,7],[4,7, 1,9],[1,9, 3,9]],
+      [[0,1, 3,1],[3,1, 1,3],[1,3, 4,6],[4,6, 0,8]],
+      [[0,0, 4,1],[4,1, 0,3],[0,3, 3,6],[3,6, 1,9]],
+      [[1,2, 4,2],[4,2, 2,5],[2,5, 4,8],[4,8, 0,8]],
+      [[0,1, 4,0],[4,0, 1,4],[1,4, 3,7],[3,7, 0,9]]
+    ]
+  },
+  {
+    vol: 9, title: "10×10 たてにおる（そうごう①）",
+    problems: [
+      [[0,0, 4,2],[4,2, 1,4],[1,4, 4,6],[4,6, 0,8],[0,8, 3,9]],
+      [[1,1, 4,0],[4,0, 2,4],[2,4, 4,7],[4,7, 0,9]],
+      [[0,2, 3,1],[3,1, 1,4],[1,4, 4,5],[4,5, 1,8],[1,8, 3,8]],
+      [[0,0, 4,1],[4,1, 1,3],[1,3, 3,6],[3,6, 0,9]],
+      [[1,0, 3,2],[3,2, 0,4],[0,4, 4,7],[4,7, 2,9]],
+      [[0,1, 4,1],[4,1, 1,5],[1,5, 4,8],[4,8, 0,9]]
+    ]
+  },
+  {
+    vol: 10, title: "10×10 たてにおる（そうごう②）",
+    problems: [
+      [[0,0, 3,1],[3,1, 0,4],[0,4, 4,6],[4,6, 1,9]],
+      [[1,0, 4,2],[4,2, 1,4],[1,4, 4,7],[4,7, 0,8],[0,8, 3,8]],
+      [[0,2, 4,0],[4,0, 2,4],[2,4, 4,8],[4,8, 0,9]],
+      [[0,0, 4,1],[4,1, 1,4],[1,4, 3,7],[3,7, 0,8]],
+      [[1,1, 3,0],[3,0, 4,4],[4,4, 1,7],[1,7, 4,9]],
+      [[0,1, 3,2],[3,2, 0,5],[0,5, 4,7],[4,7, 1,9]]
+    ]
+  }
+];
+
+pagesData.forEach(p => {
+  let html = `
+  <div class="page">
+    <header>
+      <div class="title">りのすけ てんずけい Vol. ${p.vol}（${p.title}）</div>
+      <div class="name-box">なまえ：</div>
+    </header>
+    <div class="subtitle">【指示】あかい てんせんで おりまげた ときに、ぴったり かさなるように みぎがわに せんを ひきましょう。</div>
+    <div class="grid-container">
+  `;
+
+  p.problems.forEach((prob, idx) => {
+    html += `
+      <div class="problem-box">
+        <div class="problem-title">だい ${idx + 1} もん</div>
+        <div class="content">
+          <!-- 左側のおてほん（10x10点＋非対称図形） -->
+          <div class="section">
+            <div class="section-label">【おてほん】</div>
+            <svg width="140" height="140" viewBox="0 0 140 140">
+              ${drawLines10(prob)}
+              ${dots10x10HTML()}
+            </svg>
+          </div>
+          
+          <!-- 折り目（赤い点線） -->
+          <div class="axis-line"></div>
+          
+          <!-- 右側のこたえ枠（10x10点のみ） -->
+          <div class="section">
+            <div class="section-label">【こたえ】</div>
+            <svg width="140" height="140" viewBox="0 0 140 140">
+              ${dots10x10HTML()}
+            </svg>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  html += `
+    </div>
+  </div>
+  `;
+  document.write(html);
+});
+</script>
+
+</body>
+</html>
