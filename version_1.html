@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>りのすけ てんずけい 全10枚セット</title>
+<title>てんずけい 全10枚セット</title>
 <style>
   @page {
     size: A4 portrait;
@@ -96,6 +96,9 @@
 <body>
 
 <script>
+const studentName = "りのすけ";
+document.title = `${studentName} ${document.title}`;
+
 // 5x5 の点（140x140のキャンバス内に配置: 10, 40, 70, 100, 130）
 const dotsHTML = () => {
   let dots = '';
@@ -257,7 +260,7 @@ pages.forEach(p => {
   let html = `
   <div class="page">
     <header>
-      <div class="title">りのすけ てんずけい Vol. ${p.vol}（${p.titleType}）</div>
+      <div class="title">${studentName} てんずけい Vol. ${p.vol}（${p.titleType}）</div>
       <div class="name-box">なまえ：</div>
     </header>
     <div class="subtitle">${p.instruction}</div>

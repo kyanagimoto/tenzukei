@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>りのすけ用のてんずけい</title>
+<title>用のてんずけい</title>
 <style>
   @page {
     size: A4 portrait;
@@ -157,6 +157,9 @@
 <div id="pages"></div>
 
 <script>
+  const studentName = "りのすけ";
+  document.title = `${studentName}${document.title}`;
+
   const topGrid = [12, 36, 60, 84, 108];
   const bottomGrid = [6, 18, 30, 42, 54, 66, 78, 90, 102, 114];
 
@@ -348,7 +351,7 @@
     return `
       <div class="page">
         <header class="sheet-heading">
-          <div class="sheet-title">りのすけ用のてんずけい　${pageIndex + 1}</div>
+          <div class="sheet-title">${studentName}用のてんずけい　${pageIndex + 1}</div>
           <div class="name-line">なまえ：</div>
         </header>
         <main class="problems">${problems}</main>

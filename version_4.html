@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>りのすけ てんずけい 10x10 線対称（ひたいしょう図形）全10枚セット</title>
+<title>てんずけい 10x10 線対称（ひたいしょう図形）全10枚セット</title>
 <style>
   @page {
     size: A4 portrait;
@@ -91,6 +91,9 @@
 <body>
 
 <script>
+const studentName = "りのすけ";
+document.title = `${studentName} ${document.title}`;
+
 // 10x10 の点（140x140キャンバス内に10x10配置）
 // 座標: 5, 19, 33, 47, 61, 75, 89, 103, 117, 131
 const getCoord10 = (i) => 5 + i * 14;
@@ -232,7 +235,7 @@ pagesData.forEach(p => {
   let html = `
   <div class="page">
     <header>
-      <div class="title">りのすけ てんずけい Vol. ${p.vol}（${p.title}）</div>
+      <div class="title">${studentName} てんずけい Vol. ${p.vol}（${p.title}）</div>
       <div class="name-box">なまえ：</div>
     </header>
     <div class="subtitle">【指示】あかい てんせんで おりまげた ときに、ぴったり かさなるように みぎがわに せんを ひきましょう。</div>
