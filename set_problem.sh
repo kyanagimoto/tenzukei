@@ -4,14 +4,14 @@ set -eu
 script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 
 if [ "${1-}" = "--new-problem" ]; then
-  if [ "$#" -lt 2 ] || [ "$#" -gt 4 ]; then
+  if [ "$#" -lt 2 ] || [ "$#" -gt 5 ]; then
     printf 'Usage: %s --new-problem "student name" [problem count] [output file]\n' "$0" >&2
+    printf '   or: %s --new-problem "student name" --sheets [sheet count] [output file]\n' "$0" >&2
     exit 1
   fi
 
   student_name=$2
-  problem_count=${3:-6}
-  output_file=${4:-new_problems.html}
+  shift 2
 
   case "$student_name" in
     *'"'*|*'\n'*)
@@ -20,12 +20,38 @@ if [ "${1-}" = "--new-problem" ]; then
       ;;
   esac
 
-  case "$problem_count" in
-    ''|*[!0-9]*|0)
-      printf 'Error: problem count must be a positive integer.\n' >&2
+  if [ "${1-}" = "--sheets" ]; then
+    if [ "$#" -lt 2 ]; then
+      printf 'Error: --sheets requires a sheet count.\n' >&2
       exit 1
-      ;;
-  esac
+    fi
+    sheet_count=$2
+    shift 2
+
+    case "$sheet_count" in
+      ''|*[!0-9]*|0)
+        printf 'Error: sheet count must be a positive integer.\n' >&2
+        exit 1
+        ;;
+    esac
+
+    # 1枚 = 4問として、指定された枚数分の問題数に変換する。
+    problem_count=$((sheet_count * 4))
+  else
+    problem_count=${1:-6}
+    if [ "$#" -ge 1 ]; then
+      shift
+    fi
+
+    case "$problem_count" in
+      ''|*[!0-9]*|0)
+        printf 'Error: problem count must be a positive integer.\n' >&2
+        exit 1
+        ;;
+    esac
+  fi
+
+  output_file=${1:-new_problems.html}
 
   export NEW_STUDENT_NAME="$student_name"
   export NEW_PROBLEM_COUNT="$problem_count"
