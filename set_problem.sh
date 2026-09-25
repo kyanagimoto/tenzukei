@@ -49,26 +49,50 @@ const connect = points => points.slice(0, -1).map((point, index) => [
   point[0], point[1], points[index + 1][0], points[index + 1][1]
 ]);
 
-const makePointProblem = patternIndex => {
-  const patterns = [
-    [
-      [[0, 1], [2, 0], [4, 2], [2, 4], [0, 3], [0, 1]],
-      [[3, 3], [5, 1], [7, 2], [8, 5], [6, 7], [4, 6], [3, 3]],
-      [[1, 7], [3, 6], [5, 8], [7, 7], [8, 9]]
-    ],
-    [
-      [[0, 2], [2, 1], [4, 3], [3, 5], [1, 5], [0, 2]],
-      [[5, 1], [7, 0], [9, 2], [8, 4], [6, 3], [5, 1]],
-      [[2, 7], [4, 5], [6, 6], [5, 9], [3, 8], [2, 7]]
-    ],
-    [
-      [[0, 6], [2, 4], [4, 5], [5, 7], [3, 9], [1, 8], [0, 6]],
-      [[2, 1], [4, 0], [6, 2], [5, 4], [3, 3], [2, 1]],
-      [[7, 5], [9, 4], [8, 7], [9, 9], [7, 8], [7, 5]]
-    ]
-  ];
-  return patterns[patternIndex % patterns.length].flatMap(connect);
+const randomInt = (min, max) => min + Math.floor(Math.random() * (max - min + 1));
+const randomFloat = (min, max) => min + Math.random() * (max - min);
+
+// 点図形も、盤面を3つの領域に分けてそれぞれにランダムな多角形を1つ生成する。
+const POINT_REGIONS = [
+  { x: [1, 3], y: [1, 3], radius: 2 },
+  { x: [5, 8], y: [1, 3], radius: 2.3 },
+  { x: [2, 7], y: [6, 8], radius: 2.6 }
+];
+
+const clampCoordinate = value => Math.min(gridSize - 1, Math.max(0, value));
+
+const makeRandomPolygon = region => {
+  const vertexCount = randomInt(4, 6);
+  const centerX = randomFloat(region.x[0], region.x[1]);
+  const centerY = randomFloat(region.y[0], region.y[1]);
+  const angleStep = (2 * Math.PI) / vertexCount;
+  const rawPoints = Array.from({ length: vertexCount }, (_, index) => {
+    const angle = angleStep * index + randomFloat(-angleStep * 0.3, angleStep * 0.3);
+    const radius = region.radius * randomFloat(0.55, 1);
+    return [
+      clampCoordinate(Math.round(centerX + radius * Math.cos(angle))),
+      clampCoordinate(Math.round(centerY + radius * Math.sin(angle)))
+    ];
+  });
+  const points = rawPoints.filter((current, index) => {
+    const previous = rawPoints[index === 0 ? rawPoints.length - 1 : index - 1];
+    return current[0] !== previous[0] || current[1] !== previous[1];
+  });
+  return points.length >= 3 ? [...points, points[0]] : null;
 };
+
+const makePointProblem = () => POINT_REGIONS
+  .map(region => {
+    let polygon = null;
+    for (let attempt = 0; attempt < 5 && !polygon; attempt += 1) {
+      polygon = makeRandomPolygon(region);
+    }
+    return polygon || [
+      [region.x[0], region.y[0]], [region.x[1], region.y[0]],
+      [region.x[1], region.y[1]], [region.x[0], region.y[0]]
+    ];
+  })
+  .flatMap(connect);
 
 const point = coordinate => 12 + coordinate * (96 / (gridSize - 1));
 const drawPointLines = lines => lines.map(([x1, y1, x2, y2]) =>
@@ -117,17 +141,51 @@ const makeCubeFigure = voxels => cubeVisibleFaces(voxels).map(face => {
   return `<polygon points="${pts}"/>`;
 }).join('');
 
-const cubeProblemPatterns = [
-  // 階段状（3・1・1）に積んだ形
-  [[0, 0, 0], [0, 0, 1], [0, 0, 2], [1, 0, 0], [2, 0, 0]],
-  // 右奥に1個ずらして積んだ階段状の形
-  [[0, 0, 0], [1, 0, 0], [1, 0, 1], [2, 0, 0], [2, 0, 1], [2, 0, 2], [1, 1, 0]],
-  // 塔と手前の張り出し、右の一段
-  [[0, 0, 0], [0, 0, 1], [1, 0, 0], [1, 0, 1], [1, 0, 2], [1, 0, 3], [2, 0, 0], [1, 1, 0]]
-];
+// 積み木の形をランダムに生成する。i:0-2, j:0-1 の列に、下から積み上げる（宙に浮いた立方体ができないようにする）。
+const CUBE_BOUNDS = { i: 3, j: 2, k: 4 };
 
-const makeCubeProblem = patternIndex =>
-  makeCubeFigure(cubeProblemPatterns[patternIndex % cubeProblemPatterns.length]);
+const generateRandomCubeShape = (cubeCount = randomInt(4, 7)) => {
+  const columnKey = (i, j) => `${i},${j}`;
+  const columns = new Map();
+  columns.set(columnKey(randomInt(0, CUBE_BOUNDS.i - 1), randomInt(0, CUBE_BOUNDS.j - 1)), 1);
+  let total = 1;
+
+  const neighborsOf = (i, j) => [[i + 1, j], [i - 1, j], [i, j + 1], [i, j - 1]]
+    .filter(([ni, nj]) => ni >= 0 && ni < CUBE_BOUNDS.i && nj >= 0 && nj < CUBE_BOUNDS.j);
+
+  let attempts = 0;
+  while (total < cubeCount && attempts < 60) {
+    attempts += 1;
+    const existingKeys = [...columns.keys()];
+    const [pi, pj] = existingKeys[randomInt(0, existingKeys.length - 1)].split(',').map(Number);
+
+    if (Math.random() < 0.5) {
+      // 既にある柱の上に積む
+      const height = columns.get(columnKey(pi, pj));
+      if (height < CUBE_BOUNDS.k) {
+        columns.set(columnKey(pi, pj), height + 1);
+        total += 1;
+      }
+    } else {
+      // 隣に新しい柱を1個置く（必ず既存の柱に接するので、形はつながる）
+      const candidates = neighborsOf(pi, pj).filter(([ni, nj]) => !columns.has(columnKey(ni, nj)));
+      if (candidates.length > 0) {
+        const [ni, nj] = candidates[randomInt(0, candidates.length - 1)];
+        columns.set(columnKey(ni, nj), 1);
+        total += 1;
+      }
+    }
+  }
+
+  const voxels = [];
+  columns.forEach((height, key) => {
+    const [i, j] = key.split(',').map(Number);
+    for (let k = 0; k < height; k += 1) voxels.push([i, j, k]);
+  });
+  return voxels;
+};
+
+const makeCubeProblem = () => makeCubeFigure(generateRandomCubeShape());
 
 const cubeSvg = (lines = '') => `<svg viewBox="0 0 120 120" role="img"><g class="grid">${grid}</g><g class="shape">${lines}</g></svg>`;
 const renderProblem = (index, lines, isCube) => {
@@ -137,7 +195,7 @@ const renderProblem = (index, lines, isCube) => {
 
 const problemMarkup = Array.from({ length: problemCount }, (_, index) => {
   const isCube = index % 4 < 2;
-  const lines = isCube ? makeCubeProblem(index) : drawPointLines(makePointProblem(index));
+  const lines = isCube ? makeCubeProblem() : drawPointLines(makePointProblem());
   return renderProblem(index, lines, isCube);
 });
 const pages = Array.from({ length: Math.ceil(problemCount / 4) }, (_, pageIndex) => {
