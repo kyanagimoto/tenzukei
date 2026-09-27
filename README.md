@@ -32,7 +32,7 @@ sh generate_worksheets.sh --new-problem "生徒の名前" --sheets [枚数] [出
 例: 3枚（12問）分を1つのHTMLにまとめて生成する
 
 ```sh
-sh generate_worksheets.sh --new-problem "りのすけ" --sheets 3
+sh generate_worksheets.sh --new-problem "たろう" --sheets 3
 ```
 
 #### 立体図形の描き方について
