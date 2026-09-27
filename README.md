@@ -4,7 +4,7 @@
 
 ## ファイル構成
 
-- `set_problem.sh` — プリントを生成・編集するためのスクリプト。
+- `generate_worksheets.sh` — プリントを生成・編集するためのスクリプト。
 
 ## 使い方
 
@@ -13,7 +13,7 @@
 点図形（星型などの多角形）と立体図形（積み木の見取り図）を組み合わせた新しいプリント（HTML、A4想定）を生成します。
 
 ```sh
-sh set_problem.sh --new-problem "生徒の名前" [問題数] [出力ファイル名]
+sh generate_worksheets.sh --new-problem "生徒の名前" [問題数] [出力ファイル名]
 ```
 
 - `問題数` — 省略時は6問（4問ごとに1ページ、2ページ構成になります）。
@@ -26,13 +26,13 @@ sh set_problem.sh --new-problem "生徒の名前" [問題数] [出力ファイ�
 `問題数`（4問=1枚として計算する数字）の代わりに、`--sheets` オプションで「何枚のプリントを1つのHTMLにまとめるか」を直接指定できます。1枚 = 4問として自動計算されます。
 
 ```sh
-sh set_problem.sh --new-problem "生徒の名前" --sheets [枚数] [出力ファイル名]
+sh generate_worksheets.sh --new-problem "生徒の名前" --sheets [枚数] [出力ファイル名]
 ```
 
 例: 3枚（12問）分を1つのHTMLにまとめて生成する
 
 ```sh
-sh set_problem.sh --new-problem "りのすけ" --sheets 3
+sh generate_worksheets.sh --new-problem "りのすけ" --sheets 3
 ```
 
 #### 立体図形の描き方について
