@@ -86,7 +86,7 @@ jobs:
         run: rm -f /tmp/worksheets.html
 
       - name: Upload PDF artifact only
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: worksheets-pdf
           path: /tmp/worksheets.pdf
