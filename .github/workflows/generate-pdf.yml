@@ -6,7 +6,7 @@ on:
       student_name:
         description: "Student name"
         required: true
-        default: "りのすけ"
+        default: "たろう"
         type: string
       sheet_count:
         description: "Number of sheets"
