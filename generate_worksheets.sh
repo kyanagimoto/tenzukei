@@ -214,15 +214,103 @@ const generateRandomCubeShape = (cubeCount = randomInt(4, 7)) => {
 const makeCubeProblem = () => makeCubeFigure(generateRandomCubeShape());
 
 const cubeSvg = (lines = '') => `<svg viewBox="0 0 120 120" role="img"><g class="grid">${grid}</g><g class="shape">${lines}</g></svg>`;
-const renderProblem = (index, lines, isCube) => {
-  const render = isCube ? cubeSvg : pointSvg;
+
+// 円周上に等間隔で並べた点を、ランダムな順番で線でつなぐ問題。
+const CIRCLE_DOT_COUNT = 16;
+const circleDots = Array.from({ length: CIRCLE_DOT_COUNT }, (_, index) => {
+  const angle = (2 * Math.PI * index) / CIRCLE_DOT_COUNT - Math.PI / 2;
+  return [60 + 46 * Math.cos(angle), 60 + 46 * Math.sin(angle)];
+});
+
+const makeCircleProblem = () => {
+  const stepCount = randomInt(5, 7);
+  const path = [randomInt(0, CIRCLE_DOT_COUNT - 1)];
+  while (path.length < stepCount + 1) {
+    const last = path[path.length - 1];
+    const candidates = Array.from({ length: CIRCLE_DOT_COUNT }, (_, index) => index).filter(index => {
+      const gap = Math.min((index - last + CIRCLE_DOT_COUNT) % CIRCLE_DOT_COUNT, (last - index + CIRCLE_DOT_COUNT) % CIRCLE_DOT_COUNT);
+      return !path.includes(index) && gap >= 4;
+    });
+    if (candidates.length === 0) break;
+    path.push(candidates[randomInt(0, candidates.length - 1)]);
+  }
+  return path.slice(0, -1).map((from, index) => {
+    const to = path[index + 1];
+    return `<line x1="${circleDots[from][0].toFixed(1)}" y1="${circleDots[from][1].toFixed(1)}" x2="${circleDots[to][0].toFixed(1)}" y2="${circleDots[to][1].toFixed(1)}"/>`;
+  }).join('');
+};
+
+const circleSvg = (lines = '') => `<svg viewBox="0 0 120 120" role="img"><g class="shape">${lines}</g><g class="dots">${circleDots.map(([x, y]) => `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.2"/>`).join('')}</g></svg>`;
+
+
+// 縦長の点盤の上を、点から点へたどる一筆書きの線を結ぶ問題（縦・横・斜め1マス）。
+const PATH_COLS = 6;
+const PATH_ROWS = 8;
+const PATH_SPACING = 12.5;
+const pathX = column => (120 - (PATH_COLS - 1) * PATH_SPACING) / 2 + column * PATH_SPACING;
+const pathY = row => (120 - (PATH_ROWS - 1) * PATH_SPACING) / 2 + row * PATH_SPACING;
+const PATH_STEPS = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
+
+const segmentsCross = ([ax, ay, bx, by], [cx, cy, dx, dy]) => {
+  const side = (px, py, qx, qy, rx, ry) => Math.sign((qx - px) * (ry - py) - (qy - py) * (rx - px));
+  return side(ax, ay, bx, by, cx, cy) * side(ax, ay, bx, by, dx, dy) < 0
+    && side(cx, cy, dx, dy, ax, ay) * side(cx, cy, dx, dy, bx, by) < 0;
+};
+
+const makePathProblem = () => {
+  const targetLength = randomInt(18, 26);
+  let best = [];
+  for (let attempt = 0; attempt < 30 && best.length < targetLength; attempt += 1) {
+    const path = [[randomInt(0, PATH_COLS - 1), randomInt(0, PATH_ROWS - 1)]];
+    const visited = new Set([path[0].join(',')]);
+    const segments = [];
+    while (path.length < targetLength) {
+      const [cx, cy] = path[path.length - 1];
+      // 縦横は1マス、斜めは1〜3マスの長い線も許す。通過する点はすべて未使用で、既存の線と交差しないものだけ選ぶ。
+      const options = [];
+      PATH_STEPS.forEach(([dx, dy]) => {
+        const isDiagonal = dx !== 0 && dy !== 0;
+        for (let length = 1; length <= (isDiagonal ? 3 : 1); length += 1) {
+          const nx = cx + dx * length;
+          const ny = cy + dy * length;
+          if (nx < 0 || nx >= PATH_COLS || ny < 0 || ny >= PATH_ROWS) break;
+          const crossed = Array.from({ length }, (_, step) => `${cx + dx * (step + 1)},${cy + dy * (step + 1)}`);
+          if (crossed.some(key => visited.has(key))) break;
+          if (segments.some(segment => segmentsCross(segment, [cx, cy, nx, ny]))) continue;
+          options.push({ nx, ny, crossed, isDiagonal, length });
+        }
+      });
+      if (options.length === 0) break;
+      const longDiagonals = options.filter(option => option.length > 1);
+      const straight = options.filter(option => !option.isDiagonal);
+      const pool = longDiagonals.length > 0 && Math.random() < 0.3 ? longDiagonals
+        : straight.length > 0 && Math.random() < 0.7 ? straight : options;
+      const choice = pool[randomInt(0, pool.length - 1)];
+      choice.crossed.forEach(key => visited.add(key));
+      segments.push([cx, cy, choice.nx, choice.ny]);
+      path.push([choice.nx, choice.ny]);
+    }
+    if (path.length > best.length) best = path;
+  }
+  return best.slice(0, -1).map(([x, y], index) =>
+    `<line x1="${pathX(x)}" y1="${pathY(y)}" x2="${pathX(best[index + 1][0])}" y2="${pathY(best[index + 1][1])}"/>`
+  ).join('');
+};
+
+const pathDots = Array.from({ length: PATH_ROWS }, (_, y) =>
+  Array.from({ length: PATH_COLS }, (_, x) => `<circle cx="${pathX(x)}" cy="${pathY(y)}" r="2.2"/>`).join('')
+).join('');
+const pathSvg = (lines = '') => `<svg viewBox="0 0 120 120" role="img"><g class="shape">${lines}</g><g class="dots">${pathDots}</g></svg>`;
+
+const renderProblem = (index, lines, kind) => {
+  const render = { cube: cubeSvg, circle: circleSvg, point: pointSvg, path: pathSvg }[kind];
   return `<section class="problem"><h2>だい ${index + 1} もん</h2><div class="figures"><div><p>【おてほん】</p>${render(lines)}</div><div class="divider"></div><div><p>【こたえ】</p>${render()}</div></div></section>`;
 };
 
 const problemMarkup = Array.from({ length: problemCount }, (_, index) => {
-  const isCube = index % 4 < 2;
-  const lines = isCube ? makeCubeProblem() : drawPointLines(makePointProblem());
-  return renderProblem(index, lines, isCube);
+  const kind = index % 4 === 0 ? 'cube' : index % 4 === 1 ? 'circle' : index % 4 === 2 ? 'point' : 'path';
+  const lines = { cube: makeCubeProblem, circle: makeCircleProblem, path: makePathProblem, point: () => drawPointLines(makePointProblem()) }[kind]();
+  return renderProblem(index, lines, kind);
 });
 const pages = Array.from({ length: Math.ceil(problemCount / 4) }, (_, pageIndex) => {
   const pageProblems = problemMarkup.slice(pageIndex * 4, pageIndex * 4 + 4).join('');
