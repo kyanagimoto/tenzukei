@@ -1,0 +1,120 @@
+name: Generate Rotation PDF Worksheets
+
+on:
+  workflow_dispatch:
+    inputs:
+      student_name:
+        description: "Student name (optional)"
+        required: false
+        default: "りのすけ"
+        type: string
+      sheet_count:
+        description: "Number of sheets (1 sheet = 5 problems)"
+        required: true
+        default: "2"
+        type: string
+      mode:
+        description: "Pages to include"
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - all
+          - problems
+          - answers
+
+jobs:
+  generate-pdf:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+
+      - name: Install Puppeteer
+        run: npm install --save-dev puppeteer
+
+      - name: Install Japanese fonts
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fonts-noto-cjk
+
+      - name: Generate rotation worksheet HTML in temp
+        run: |
+          bash ./generate_rotation_worksheets.sh \
+            "${{ inputs.student_name }}" \
+            "${{ inputs.sheet_count }}" \
+            /tmp/rotation_worksheets.html
+
+      - name: Convert HTML to PDF
+        env:
+          PRINT_MODE: ${{ inputs.mode }}
+        run: |
+          node <<'NODE'
+          const puppeteer = require('puppeteer');
+
+          (async () => {
+            const browser = await puppeteer.launch({
+              headless: 'new',
+              args: ['--no-sandbox', '--disable-setuid-sandbox']
+            });
+
+            try {
+              const page = await browser.newPage();
+              await page.goto('file:///tmp/rotation_worksheets.html', {
+                waitUntil: 'networkidle0',
+                timeout: 60000
+              });
+
+              // 指定された印刷モード（問題のみ、解答のみ、全ページ）に応じてスタイルを適用
+              const mode = process.env.PRINT_MODE || 'all';
+              if (mode === 'problems') {
+                await page.addStyleTag({
+                  content: '.answer-sheet { display: none !important; }'
+                });
+              } else if (mode === 'answers') {
+                await page.addStyleTag({
+                  content: '.problem-sheet { display: none !important; }'
+                });
+              }
+
+              await page.pdf({
+                path: '/tmp/rotation_worksheets.pdf',
+                format: 'A4',
+                landscape: true,
+                printBackground: true,
+                preferCSSPageSize: true,
+                margin: {
+                  top: '5mm',
+                  bottom: '5mm',
+                  left: '5mm',
+                  right: '5mm'
+                }
+              });
+
+              console.log('PDF generated: /tmp/rotation_worksheets.pdf');
+            } finally {
+              await browser.close();
+            }
+          })().catch((error) => {
+            console.error(error);
+            process.exit(1);
+          });
+          NODE
+
+      - name: Remove HTML file
+        run: rm -f /tmp/rotation_worksheets.html
+
+      - name: Upload PDF artifact only
+        uses: actions/upload-artifact@v7
+        with:
+          name: rotation-worksheets-pdf
+          path: /tmp/rotation_worksheets.pdf
+          if-no-files-found: error
+          retention-days: 30
+
