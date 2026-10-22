@@ -37,7 +37,7 @@ jobs:
           node-version: "22"
 
       - name: Install Puppeteer
-        run: npm install --save-dev puppeteer
+        run: npm install --no-save --package-lock=false puppeteer@24.37.2
 
       - name: Install Japanese fonts
         run: |
@@ -117,4 +117,3 @@ jobs:
           path: /tmp/rotation_worksheets.pdf
           if-no-files-found: error
           retention-days: 30
-
