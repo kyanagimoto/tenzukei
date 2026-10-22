@@ -6,7 +6,7 @@ on:
       student_name:
         description: "Student name (optional)"
         required: false
-        default: "りのすけ"
+        default: "たろう"
         type: string
       sheet_count:
         description: "Number of sheets (1 sheet = 5 problems)"
