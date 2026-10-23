@@ -37,7 +37,7 @@ jobs:
 
       - name: Generate worksheet HTML in temp
         run: |
-          bash ./generate_worksheets.sh \
+          bash ./generate_line_worksheets.sh \
             --new-problem "${{ inputs.student_name }}" \
             --sheets "${{ inputs.sheet_count }}" \
             /tmp/worksheets.html

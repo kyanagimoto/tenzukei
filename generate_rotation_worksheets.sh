@@ -102,6 +102,7 @@ import os, sys, random, html
 student_name = os.environ.get("ROT_STUDENT_NAME", "").strip()
 sheet_count = int(os.environ.get("ROT_SHEET_COUNT", "1"))
 output_file = os.environ.get("ROT_OUTPUT_FILE", "rotation_problems.html")
+header_title = f"{html.escape(student_name)}のかいてんずけい" if student_name else "かいてんずけい"
 
 # -------------------------------------------------------------
 # 1. セルパターンの定義と回転・反転遷移テーブル
@@ -551,7 +552,7 @@ def render_page(sheet_idx, problems, is_answer_sheet=False):
 
     return f"""<section class="{page_class}">
     <header class="sheet-header">
-        <div class="header-left"></div>
+        <div class="header-left">{header_title}</div>
         <div class="header-center">
             {render_legend()}
         </div>
@@ -680,6 +681,8 @@ body {
     align-items: center;
     gap: 10px;
     width: 55mm;
+    font-size: 11pt;
+    font-weight: bold;
 }
 .dice-icon {
     width: 12mm;
@@ -920,4 +923,3 @@ with open(output_file, "w", encoding="utf-8") as f:
 msg_name = f" for {student_name}" if student_name else ""
 print(f"Created {output_file} with {sheet_count} sheet(s) ({sheet_count * 5} problems){msg_name}.")
 PYTHON_SCRIPT
-
