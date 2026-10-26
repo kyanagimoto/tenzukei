@@ -563,7 +563,7 @@ def render_page(sheet_idx, problems, is_answer_sheet=False):
         </div>
     </header>
     <div class="sheet-title-row">
-        <span class="sheet-number">第 {sheet_idx + 1} 集 {ans_badge}</span>
+        <span class="sheet-number"> ページ {sheet_idx + 1} {ans_badge}</span>
         <span class="sheet-instruction">ひだりの ずけいを しるしの とおりに たおした ときの かたちを、みぎの ４つから えらんで ○ を つけましょう。</span>
     </div>
     <div class="problems-table">
