@@ -241,18 +241,30 @@ def generate_random_figure():
 # -------------------------------------------------------------
 # 3. 1問の生成（正解と3つの質の高いダミー候補）
 # -------------------------------------------------------------
+MARK_VALUES = {
+    "▲": 3, # 左に1回倒す = 反時計90度 = 時計270度 (+3 mod 4)
+    "△": 2, # 左に2回倒す = 反時計180度 = 180度 (+2 mod 4)
+    "◆": 1, # 右に1回倒す = 時計90度 (+1 mod 4)
+    "◇": 2  # 右に2回倒す = 時計180度 (+2 mod 4)
+}
+
 def generate_problem(instruction_marks):
-    mark_values = {
-        "▲": 3, # 左に1回倒す = 反時計90度 = 時計270度 (+3 mod 4)
-        "△": 2, # 左に2回倒す = 反時計180度 = 180度 (+2 mod 4)
-        "◆": 1, # 右に1回倒す = 時計90度 (+1 mod 4)
-        "◇": 2  # 右に2回倒す = 時計180度 (+2 mod 4)
-    }
-    net_rot = sum(mark_values[m] for m in instruction_marks) % 4
+    net_rot = sum(MARK_VALUES[m] for m in instruction_marks) % 4
     if net_rot == 0:
         instruction_marks = list(instruction_marks)
-        instruction_marks[-1] = "◆" if instruction_marks[-1] == "▲" else "▲"
-        net_rot = sum(mark_values[m] for m in instruction_marks) % 4
+        prefix = instruction_marks[:-1]
+        prefix_values = {MARK_VALUES[mark] for mark in prefix}
+        last_mark = instruction_marks[-1]
+        replacement_marks = ["▲", "△"] if last_mark in ("▲", "△") else ["◆", "◇"]
+        replacements = [
+            mark for mark in replacement_marks
+            if MARK_VALUES[mark] not in prefix_values
+            and (sum(MARK_VALUES[m] for m in prefix) + MARK_VALUES[mark]) % 4 != 0
+        ]
+        if not replacements:
+            raise ValueError("Cannot create a non-redundant rotation instruction")
+        instruction_marks[-1] = random.choice(replacements)
+        net_rot = sum(MARK_VALUES[m] for m in instruction_marks) % 4
 
     orig = generate_random_figure()
     ans = rot90_figure(orig, net_rot)
@@ -519,10 +531,26 @@ def generate_sheet_problems():
         if r_idx == 0:
             marks = [random.choice(["▲", "◆", "△", "◇"])]
         elif r_idx in [1, 2]:
-            marks = [random.choice(["▲", "△"]), random.choice(["◆", "◇"])]
+            triangle_mark = random.choice(["▲", "△"])
+            diamond_marks = [
+                mark for mark in ["◆", "◇"]
+                if MARK_VALUES[mark] != MARK_VALUES[triangle_mark]
+            ]
+            marks = [triangle_mark, random.choice(diamond_marks)]
             random.shuffle(marks)
         else:
-            marks = [random.choice(["▲", "△"]), random.choice(["◆", "◇"]), random.choice(["▲", "△", "◆", "◇"])]
+            triangle_mark = random.choice(["▲", "△"])
+            diamond_marks = [
+                mark for mark in ["◆", "◇"]
+                if MARK_VALUES[mark] != MARK_VALUES[triangle_mark]
+            ]
+            marks = [triangle_mark, random.choice(diamond_marks)]
+            used_values = {MARK_VALUES[mark] for mark in marks}
+            additional_marks = [
+                mark for mark in MARK_VALUES
+                if MARK_VALUES[mark] not in used_values
+            ]
+            marks.append(random.choice(additional_marks))
             random.shuffle(marks)
         prob = generate_problem(marks)
         problems.append(prob)
