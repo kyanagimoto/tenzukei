@@ -22,6 +22,22 @@ on:
           - all
           - problems
           - answers
+  workflow_call:
+    inputs:
+      student_name:
+        description: "Student name"
+        required: false
+        type: string
+        default: "たろう"
+      sheet_count:
+        description: "Number of sheets (1 sheet = 5 problems)"
+        required: true
+        type: string
+      mode:
+        description: "Pages to include"
+        required: false
+        type: string
+        default: "all"
 
 jobs:
   generate-pdf:

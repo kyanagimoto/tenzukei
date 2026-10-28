@@ -6,6 +6,7 @@
 
 - `generate_line_worksheets.sh` — 点図形・立体図形模写プリントを生成・編集するためのスクリプト。
 - `generate_rotation_worksheets.sh` — 図形回転（図形倒し）プリントを自動生成するためのスクリプト。
+- `generate_complex_geometry.sh` — 大人向けの複雑な幾何学模様をA4一枚に生成するスクリプト。
 
 ## 使い方
 
@@ -69,6 +70,17 @@ sh generate_rotation_worksheets.sh --problems 10 "たろう"
 - **質の高いひっかけ（ダミー）候補**: 4つの選択肢には、正解1つのほかに「他の回転角度（回しすぎ・逆回転）」「左右反転（鏡像の勘違い）」「1パーツだけ向きが違うニアミス変形」など、よく観察しないと見分けがつかない良問ダミーが自動配置されます。
 - **解答シート（丸付け用）同梱**: 問題シートの直後に、正解の図形に青丸印が付いた【こたえ】シートが自動生成されます。ブラウザ上部ツールバーから「問題のみ印刷」「解答のみ印刷」「全ページ印刷」をワンクリックで選択できます。
 
+### 3. 大人向けの幾何学模様を生成する
+
+左右対称の星形幾何学模様を上段のお手本に大きく配置し、下段に書き写すための空欄を設けたA4縦の印刷用HTMLを生成します。
+
+```sh
+sh generate_complex_geometry.sh [出力ファイル名]
+```
+
+- `出力ファイル名` — 省略時は `complex_geometry.html`。
+- 生成されたHTMLをブラウザで開いて印刷してください（A4縦、1ページ）。
+
 ## GitHub Actions での PDF 生成
 
 GitHub リポジトリの **Actions** タブから、ブラウザ上で直接 PDF を生成してダウンロードできます。
@@ -82,6 +94,17 @@ GitHub リポジトリの **Actions** タブから、ブラウザ上で直接 PD
    - ワークフロー「**Generate Rotation PDF Worksheets**」を選択
    - 「Run workflow」をクリックし、シート数（1シート = 5問）や対象ページ（`all`: 問題＋解答、`problems`: 問題のみ、`answers`: 解答のみ）を指定して実行
    - 完了後、Artifacts（成果物）から `rotation-worksheets-pdf`（A4横向きPDF）をダウンロード
+
+3. **幾何学模様の写し描きプリントの PDF 生成**:
+   - ワークフロー「**Generate Complex Geometry PDF**」を選択
+   - 「Run workflow」をクリックして実行（入力項目はありません）
+   - 完了後、Artifacts（成果物）から `complex-geometry-pdf` をダウンロード
+
+4. **3種類すべてのプリントを1つの PDF にまとめる**:
+   - ワークフロー「**Generate All Worksheets PDF**」を選択
+   - 「Run workflow」をクリックし、点図形・立体図形の生徒名とシート数、図形回転の生徒名・シート数・出力ページを入力して実行
+   - 3種類のPDFを並列生成してから1つに結合します
+   - 完了後、Artifacts（成果物）から `all-worksheets-pdf` をダウンロード
 
 ## 開発上の注意
 

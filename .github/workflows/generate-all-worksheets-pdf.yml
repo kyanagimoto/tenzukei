@@ -1,0 +1,98 @@
+name: Generate All Worksheets PDF
+
+on:
+  workflow_dispatch:
+    inputs:
+      line_student_name:
+        description: "Student name for line and solid figure worksheets"
+        required: true
+        default: "たろう"
+        type: string
+      line_sheet_count:
+        description: "Number of line and solid figure worksheet sheets"
+        required: true
+        default: "3"
+        type: string
+      rotation_student_name:
+        description: "Student name for rotation worksheets"
+        required: false
+        default: "たろう"
+        type: string
+      rotation_sheet_count:
+        description: "Number of rotation worksheet sheets (1 sheet = 5 problems)"
+        required: true
+        default: "2"
+        type: string
+      rotation_mode:
+        description: "Rotation worksheet pages to include"
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - all
+          - problems
+          - answers
+
+jobs:
+  generate-line-pdf:
+    uses: ./.github/workflows/generate-line-pdf.yml
+    with:
+      student_name: ${{ inputs.line_student_name }}
+      sheet_count: ${{ inputs.line_sheet_count }}
+
+  generate-rotation-pdf:
+    uses: ./.github/workflows/generate-rotation-pdf.yml
+    with:
+      student_name: ${{ inputs.rotation_student_name }}
+      sheet_count: ${{ inputs.rotation_sheet_count }}
+      mode: ${{ inputs.rotation_mode }}
+
+  generate-complex-geometry-pdf:
+    uses: ./.github/workflows/generate-complex-geometry-pdf.yml
+
+  merge-pdfs:
+    needs:
+      - generate-line-pdf
+      - generate-rotation-pdf
+      - generate-complex-geometry-pdf
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Download line and solid figure PDF
+        uses: actions/download-artifact@v7
+        with:
+          name: worksheets-pdf
+          path: /tmp/worksheet-pdfs
+
+      - name: Download rotation PDF
+        uses: actions/download-artifact@v7
+        with:
+          name: rotation-worksheets-pdf
+          path: /tmp/worksheet-pdfs
+
+      - name: Download geometry PDF
+        uses: actions/download-artifact@v7
+        with:
+          name: complex-geometry-pdf
+          path: /tmp/worksheet-pdfs
+
+      - name: Install PDF utilities
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y poppler-utils
+
+      - name: Merge PDFs
+        run: |
+          pdfunite \
+            /tmp/worksheet-pdfs/worksheets.pdf \
+            /tmp/worksheet-pdfs/rotation_worksheets.pdf \
+            /tmp/worksheet-pdfs/complex_geometry.pdf \
+            /tmp/all_worksheets.pdf
+
+      - name: Upload merged PDF
+        uses: actions/upload-artifact@v7
+        with:
+          name: all-worksheets-pdf
+          path: /tmp/all_worksheets.pdf
+          if-no-files-found: error
+          retention-days: 30

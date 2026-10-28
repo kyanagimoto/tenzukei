@@ -13,6 +13,16 @@ on:
         required: true
         default: "3"
         type: string
+  workflow_call:
+    inputs:
+      student_name:
+        description: "Student name"
+        required: true
+        type: string
+      sheet_count:
+        description: "Number of sheets"
+        required: true
+        type: string
 
 jobs:
   generate-pdf:
