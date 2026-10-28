@@ -14,46 +14,57 @@ const fs = require('fs');
 
 const outputFile = process.env.COMPLEX_GEOMETRY_FILE;
 const gridStep = 50;
+const gridCenter = 12;
+const randomInt = (min, max) => min + Math.floor(Math.random() * (max - min + 1));
 const pointString = ([x, y]) => `${x * gridStep},${y * gridStep}`;
 const polygon = points => `<polygon points="${points.map(pointString).join(' ')}"/>`;
 
-const outerDiamond = [[12, 1], [23, 12], [12, 23], [1, 12]];
-const framingSquare = [[4, 4], [20, 4], [20, 20], [4, 20]];
-const eightPointStar = [
-  [12, 3], [14, 9], [20, 4], [16, 10],
-  [22, 12], [16, 14], [20, 20], [14, 15],
-  [12, 21], [10, 15], [4, 20], [8, 14],
-  [2, 12], [8, 10], [4, 4], [10, 9]
-];
-const innerStar = eightPointStar.map(([x, y]) => [
-  12 + Math.round((x - 12) * 0.6),
-  12 + Math.round((y - 12) * 0.6)
-]);
-const middleOctagon = [
-  [12, 5], [16, 8], [19, 12], [16, 16],
-  [12, 19], [8, 16], [5, 12], [8, 8]
-];
-const centerDiamond = [[12, 7], [17, 12], [12, 17], [7, 12]];
-const centerSquare = [[10, 10], [14, 10], [14, 14], [10, 14]];
-const innerOctagon = [
-  [12, 9], [14, 10], [15, 12], [14, 14],
-  [12, 15], [10, 14], [9, 12], [10, 10]
-];
-const facets = middleOctagon.map((point, index) => {
-  const target = centerDiamond[Math.floor(index / 2)];
-  return `<line x1="${point[0] * gridStep}" y1="${point[1] * gridStep}" x2="${target[0] * gridStep}" y2="${target[1] * gridStep}"/>`;
-}).join('');
-const starBands = eightPointStar.map((point, index) => {
-  const target = innerStar[index];
-  return `<line x1="${point[0] * gridStep}" y1="${point[1] * gridStep}" x2="${target[0] * gridStep}" y2="${target[1] * gridStep}"/>`;
-}).join('');
-const innerFacets = innerOctagon.map((point, index) => {
-  const target = centerSquare[Math.floor(index / 2)];
-  return `<line x1="${point[0] * gridStep}" y1="${point[1] * gridStep}" x2="${target[0] * gridStep}" y2="${target[1] * gridStep}"/>`;
-}).join('');
+const radialPoints = (count, radii, phase = -Math.PI / 2) =>
+  Array.from({ length: count }, (_, index) => {
+    const angle = phase + (Math.PI * 2 * index) / count;
+    const radius = radii[index % (count / 4)];
+    return [
+      gridCenter + Math.round(radius * Math.cos(angle)),
+      gridCenter + Math.round(radius * Math.sin(angle))
+    ];
+  });
+
+const makeStar = (outerMin, outerMax, innerMin, innerMax) => {
+  const pointsPerQuarter = randomInt(2, 3) * 2;
+  const radii = Array.from({ length: pointsPerQuarter }, (_, index) =>
+    index % 2 === 0 ? randomInt(outerMin, outerMax) : randomInt(innerMin, innerMax)
+  );
+  return radialPoints(pointsPerQuarter * 4, radii);
+};
+
+const makePolygon = (sides, radiusMin, radiusMax, phase = -Math.PI / 2) => {
+  const radii = Array.from({ length: sides / 4 }, () => randomInt(radiusMin, radiusMax));
+  return radialPoints(sides, radii, phase);
+};
+
+const outerDiamond = makePolygon(4, 10, 11);
+const framingSquare = makePolygon(4, 7, 8, -Math.PI / 4);
+const outerStar = makeStar(8, 11, 4, 6);
+const innerStar = makeStar(4, 6, 2, 3);
+const middlePolygon = makePolygon(8, 5, 7, -Math.PI / 2 + Math.PI / 8);
+const centerDiamond = makePolygon(4, 3, 4);
+const centerSquare = makePolygon(4, 2, 3, -Math.PI / 4);
+const innerPolygon = makePolygon(8, 1, 2, -Math.PI / 2 + Math.PI / 8);
+
+const connectPoints = (outer, inner, stride = 1) => outer
+  .filter((_, index) => index % stride === 0)
+  .map((point, index) => {
+    const innerIndex = Math.round((index * stride * inner.length) / outer.length) % inner.length;
+    const target = inner[innerIndex];
+    return `<line x1="${point[0] * gridStep}" y1="${point[1] * gridStep}" x2="${target[0] * gridStep}" y2="${target[1] * gridStep}"/>`;
+  }).join('');
+
+const starBands = connectPoints(outerStar, innerStar);
+const facets = connectPoints(middlePolygon, centerDiamond, 2);
+const innerFacets = connectPoints(innerPolygon, centerSquare, 2);
 
 const svg = `<svg class="artwork" viewBox="0 0 1250 1250" role="img" aria-label="方眼の交点に沿って描く左右対称の星と八角形の幾何学模様" xmlns="http://www.w3.org/2000/svg">
-  <g class="shape">${polygon(outerDiamond)}${polygon(framingSquare)}${polygon(eightPointStar)}${starBands}${polygon(innerStar)}${polygon(middleOctagon)}${facets}${polygon(centerDiamond)}${polygon(centerSquare)}${polygon(innerOctagon)}${innerFacets}</g>
+  <g class="shape">${polygon(outerDiamond)}${polygon(framingSquare)}${polygon(outerStar)}${starBands}${polygon(innerStar)}${polygon(middlePolygon)}${facets}${polygon(centerDiamond)}${polygon(centerSquare)}${polygon(innerPolygon)}${innerFacets}</g>
 </svg>`;
 
 const html = `<!DOCTYPE html>
