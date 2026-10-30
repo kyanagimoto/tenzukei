@@ -63,8 +63,8 @@ const starBands = connectPoints(outerStar, innerStar);
 const facets = connectPoints(middlePolygon, centerDiamond, 2);
 const innerFacets = connectPoints(innerPolygon, centerSquare, 2);
 
-const dotPoints = Array.from({ length: 26 }, (_, x) => Array.from({ length: 26 }, (_, y) => `<circle class="dot" cx="${x * gridStep}" cy="${y * gridStep}" r="2.2"/>`).join('')).join('');
-const svg = `<svg class="artwork" viewBox="0 0 1250 1250" role="img" aria-label="点図形の交点に沿って描く左右対称の星と八角形の幾何学模様" xmlns="http://www.w3.org/2000/svg">
+const dotPoints = Array.from({ length: 25 }, (_, x) => Array.from({ length: 25 }, (_, y) => `<circle class="dot" cx="${x * gridStep}" cy="${y * gridStep}" r="2.2"/>`).join('')).join('');
+const svg = `<svg class="artwork" viewBox="-25 -25 1250 1250" role="img" aria-label="点図形の交点に沿って描く左右対称の星と八角形の幾何学模様" xmlns="http://www.w3.org/2000/svg">
   <g class="dots">${dotPoints}</g>
   <g class="shape">${polygon(outerDiamond)}${polygon(framingSquare)}${polygon(outerStar)}${starBands}${polygon(innerStar)}${polygon(middlePolygon)}${facets}${polygon(centerDiamond)}${polygon(centerSquare)}${polygon(innerPolygon)}${innerFacets}</g>
 </svg>`;
@@ -83,8 +83,8 @@ body { display: grid; place-items: center; font-family: "Hiragino Sans", "Yu Got
 .page { width: 210mm; height: 297mm; padding: 8mm; display: grid; grid-template-rows: 1fr 1fr; gap: 4mm; overflow: hidden; }
 .half { min-height: 0; border: 1px solid #777; display: grid; grid-template-rows: 9mm minmax(0, 1fr); justify-items: center; }
 h1 { width: 100%; margin: 0; padding: 1.5mm 2mm; border-bottom: 1px solid #aaa; font-size: 11pt; font-weight: 600; }
-.artwork { display: block; width: min(100%, 124mm); height: min(100%, 124mm); min-height: 0; background-image: radial-gradient(circle, rgba(0,0,0,0.9) 0.9px, transparent 1px); background-size: 10mm 10mm; background-position: center; }
-.copy-space { display: block; width: 100%; height: 100%; min-height: 0; background-image: radial-gradient(circle, rgba(0,0,0,0.9) 0.9px, transparent 1px); background-size: 10mm 10mm; background-position: center; }
+.artwork { display: block; width: min(100%, 125mm); height: min(100%, 125mm); min-height: 0; }
+.copy-space { display: block; width: 100%; height: 100%; min-height: 0; background-image: radial-gradient(circle, rgba(0,0,0,0.9) 0.9px, transparent 1px); background-size: 5mm 5mm; background-position: center; }
 .dots { fill: #111; opacity: 0.9; }
 .shape { fill: none; stroke: #111; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
 @media screen { body { padding: 12px; background: #e8e8e8; } .page { background: #fff; box-shadow: 0 2px 12px #0003; } }
