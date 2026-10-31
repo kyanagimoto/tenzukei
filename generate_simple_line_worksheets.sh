@@ -96,11 +96,10 @@ const makeSimplePointProblem = () => {
 };
 
 const makeSimpleCubeProblem = () => {
-  const cell = point(1) - point(0);
   const square = (x, y) => {
-    const left = point(x) - cell / 2;
-    const top = point(y) - cell / 2;
-    return `<rect x="${left.toFixed(1)}" y="${top.toFixed(1)}" width="${cell.toFixed(1)}" height="${cell.toFixed(1)}"/>`;
+    const left = point(x);
+    const top = point(y);
+    return `<rect x="${left}" y="${top}" width="${point(x + 1) - left}" height="${point(y + 1) - top}"/>`;
   };
 
   const patterns = [
