@@ -16,6 +16,7 @@ const outputFile = process.env.COMPLEX_GEOMETRY_FILE;
 const gridStep = 50;
 const gridCenter = 12;
 const randomInt = (min, max) => min + Math.floor(Math.random() * (max - min + 1));
+const randomChoice = values => values[randomInt(0, values.length - 1)];
 const pointString = ([x, y]) => `${x * gridStep},${y * gridStep}`;
 const polygon = points => `<polygon points="${points.map(pointString).join(' ')}"/>`;
 
@@ -29,44 +30,66 @@ const radialPoints = (count, radii, phase = -Math.PI / 2) =>
     ];
   });
 
-const makeStar = (outerMin, outerMax, innerMin, innerMax) => {
-  const pointsPerQuarter = randomInt(2, 3) * 2;
+const makeStar = (radiusMin, radiusMax) => {
+  const pointsPerQuarter = randomChoice([2, 4, 6]);
+  const outerMin = Math.min(radiusMax, Math.max(2, radiusMin - 1));
+  const innerMin = Math.max(1, Math.floor(radiusMin * 0.35));
+  const innerMax = Math.max(innerMin, Math.floor(radiusMax * 0.65));
   const radii = Array.from({ length: pointsPerQuarter }, (_, index) =>
-    index % 2 === 0 ? randomInt(outerMin, outerMax) : randomInt(innerMin, innerMax)
+    index % 2 === 0 ? randomInt(outerMin, radiusMax) : randomInt(innerMin, innerMax)
   );
   return radialPoints(pointsPerQuarter * 4, radii);
 };
 
-const makePolygon = (sides, radiusMin, radiusMax, phase = -Math.PI / 2) => {
+const makePolygon = (radiusMin, radiusMax) => {
+  const sides = randomChoice([4, 8]);
+  const phase = sides === 4
+    ? randomChoice([-Math.PI / 2, -Math.PI / 4])
+    : randomChoice([-Math.PI / 2, -Math.PI / 2 + Math.PI / 8]);
   const radii = Array.from({ length: sides / 4 }, () => randomInt(radiusMin, radiusMax));
   return radialPoints(sides, radii, phase);
 };
 
-const outerDiamond = makePolygon(4, 10, 11);
-const framingSquare = makePolygon(4, 7, 8, -Math.PI / 4);
-const outerStar = makeStar(8, 11, 4, 6);
-const innerStar = makeStar(4, 6, 2, 3);
-const middlePolygon = makePolygon(8, 5, 7, -Math.PI / 2 + Math.PI / 8);
-const centerDiamond = makePolygon(4, 3, 4);
-const centerSquare = makePolygon(4, 2, 3, -Math.PI / 4);
-const innerPolygon = makePolygon(8, 1, 2, -Math.PI / 2 + Math.PI / 8);
+const layerCount = randomInt(5, 8);
+const layers = Array.from({ length: layerCount }, (_, index) => {
+  const radiusMax = Math.max(1, Math.round(11 - (index * 10) / (layerCount - 1)));
+  const radiusMin = Math.max(1, radiusMax - randomInt(0, 2));
+  const points = Math.random() < 0.5
+    ? makeStar(radiusMin, radiusMax)
+    : makePolygon(radiusMin, radiusMax);
+  return { points, connect: index > 0 && Math.random() < 0.8 };
+});
 
-const connectPoints = (outer, inner, stride = 1) => outer
-  .filter((_, index) => index % stride === 0)
-  .map((point, index) => {
-    const innerIndex = Math.round((index * stride * inner.length) / outer.length) % inner.length;
+const connectPoints = (outer, inner, stride, offset) => {
+  const outerQuarter = outer.length / 4;
+  const innerQuarter = inner.length / 4;
+  return outer.flatMap((point, index) => {
+    const quarter = Math.floor(index / outerQuarter);
+    const localIndex = index % outerQuarter;
+    if (localIndex % stride !== offset) return [];
+
+    const innerIndex = quarter * innerQuarter
+      + Math.round((localIndex * innerQuarter) / outerQuarter) % innerQuarter;
     const target = inner[innerIndex];
-    return `<line x1="${point[0] * gridStep}" y1="${point[1] * gridStep}" x2="${target[0] * gridStep}" y2="${target[1] * gridStep}"/>`;
+    return [`<line x1="${point[0] * gridStep}" y1="${point[1] * gridStep}" x2="${target[0] * gridStep}" y2="${target[1] * gridStep}"/>`];
   }).join('');
+};
 
-const starBands = connectPoints(outerStar, innerStar);
-const facets = connectPoints(middlePolygon, centerDiamond, 2);
-const innerFacets = connectPoints(innerPolygon, centerSquare, 2);
+const shapeParts = layers.flatMap(({ points, connect }, index) => {
+  const parts = [polygon(points)];
+  if (connect) {
+    const outer = layers[index - 1].points;
+    const stride = randomInt(1, 3);
+    const offset = randomInt(0, stride - 1);
+    parts.push(connectPoints(outer, points, stride, offset));
+  }
+  return parts;
+}).join('');
 
 const dotPoints = Array.from({ length: 25 }, (_, x) => Array.from({ length: 25 }, (_, y) => `<circle class="dot" cx="${x * gridStep}" cy="${y * gridStep}" r="2.2"/>`).join('')).join('');
-const svg = `<svg class="artwork" viewBox="-25 -25 1250 1250" role="img" aria-label="点図形の交点に沿って描く左右対称の星と八角形の幾何学模様" xmlns="http://www.w3.org/2000/svg">
+const svg = `<svg class="artwork" viewBox="-25 -25 1250 1250" role="img" aria-label="点図形の交点に沿って描く左右対称の幾何学模様" xmlns="http://www.w3.org/2000/svg">
   <g class="dots">${dotPoints}</g>
-  <g class="shape">${polygon(outerDiamond)}${polygon(framingSquare)}${polygon(outerStar)}${starBands}${polygon(innerStar)}${polygon(middlePolygon)}${facets}${polygon(centerDiamond)}${polygon(centerSquare)}${polygon(innerPolygon)}${innerFacets}</g>
+  <g class="shape">${shapeParts}</g>
 </svg>`;
 
 const html = `<!DOCTYPE html>
